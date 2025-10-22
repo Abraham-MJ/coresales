@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# CoreSales - Arquitectura Hexagonal
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Una aplicación React Native con Expo implementando **Arquitectura Hexagonal** para un sistema de ventas limpio, testeable y mantenible.
 
-## Get started
+## 🏗️ Arquitectura
 
-1. Install dependencies
+Este proyecto sigue los principios de **Arquitectura Hexagonal** (Ports & Adapters), separando claramente:
 
-   ```bash
-   npm install
-   ```
+- **Dominio**: Lógica de negocio pura
+- **Aplicación**: Orquestación de casos de uso  
+- **Infraestructura**: Adaptadores externos (APIs, Storage)
+- **Presentación**: UI con React Native/Expo
 
-2. Start the app
+## 📁 Estructura del Proyecto
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+src/
+├── domain/              # 🎯 Lógica de Negocio
+│   ├── entities/        # Entidades de dominio
+│   ├── repositories/    # Interfaces (ports)
+│   ├── usecases/        # Casos de uso
+│   └── value-objects/   # Objetos de valor
+├── application/         # 🔄 Orquestación
+│   ├── services/        # Servicios de aplicación
+│   └── dto/             # Data Transfer Objects
+├── infrastructure/      # 🔌 Adaptadores
+│   ├── api/             # Clientes HTTP
+│   ├── storage/         # Almacenamiento local
+│   ├── repositories/    # Implementaciones
+│   └── services/        # Servicios externos
+├── presentation/        # 🎨 UI React Native
+│   ├── components/      # Componentes reutilizables
+│   ├── screens/         # Pantallas
+│   ├── hooks/           # Custom hooks
+│   └── navigation/      # Configuración de rutas
+└── shared/             # 🛠️ Código compartido
+    ├── types/          # Tipos TypeScript
+    ├── utils/          # Utilidades
+    └── constants/      # Constantes globales
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🚀 Inicio Rápido
 
-## Learn more
+### Instalación
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### Desarrollo
+```bash
+npm start          # Iniciar Expo
+npm run android    # Android
+npm run ios        # iOS  
+npm run web        # Web
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Linting
+```bash
+npm run lint
+```
 
-## Join the community
+## 📚 Documentación
 
-Join our community of developers creating universal apps.
+- **[Arquitectura Completa](./docs/ARCHITECTURE.md)** - Guía detallada de la arquitectura hexagonal
+- **[Guía de Inicio](./docs/GETTING_STARTED.md)** - Cómo implementar tu primera feature
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🧪 Testing
+
+La arquitectura hexagonal facilita el testing:
+
+- **Unit Tests**: Domain y Application (rápidos, sin dependencias)
+- **Integration Tests**: Infrastructure (con mocks)  
+- **E2E Tests**: Presentation (completos)
+
+## 🔧 Tecnologías
+
+- **React Native 0.81.4** con **React 19.1.0**
+- **Expo SDK ~54.0** (Nueva Arquitectura habilitada)
+- **TypeScript** con configuración estricta
+- **Expo Router 6.0** para navegación file-based
+- **React Native Reanimated** para animaciones
+
+## 📋 Convenciones
+
+### Naming
+- **Entities**: `User`, `Product`, `Sale`
+- **Interfaces**: `IUserRepository`, `IProductService`
+- **Use Cases**: `GetUser`, `CreateSale`, `ProcessOrder`
+- **Components**: `UserCard`, `SalesList`, `ProductForm`
+- **Hooks**: `useUser`, `useSales`, `useAuth`
+
+### Imports
+```typescript
+// Usa paths absolutos configurados en tsconfig.json
+import { User } from '@domain/entities/User';
+import { ApiUserRepository } from '@infrastructure/repositories/ApiUserRepository';
+import { useUser } from '@presentation/hooks/useUser';
+```
+
+## 🔄 Flujo de Desarrollo
+
+1. **Domain First**: Define entidades y casos de uso
+2. **Infrastructure**: Implementa repositorios y servicios
+3. **Application**: Crea servicios de orquestación si es necesario
+4. **Presentation**: Desarrolla hooks, componentes y pantallas
+
+## ✅ Beneficios
+
+- **Testeable**: Lógica de negocio independiente
+- **Mantenible**: Separación clara de responsabilidades  
+- **Flexible**: Fácil cambio de implementaciones
+- **Escalable**: Arquitectura que crece con el proyecto
+
+---
+
+¡Comienza desarrollando tu primera feature siguiendo la [Guía de Inicio](./docs/GETTING_STARTED.md)!

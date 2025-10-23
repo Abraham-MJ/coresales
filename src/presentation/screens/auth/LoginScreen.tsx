@@ -1,98 +1,140 @@
-import { Button, Card, Input, Layout, Text } from '@presentation/components/ui';
-import { Link } from 'expo-router';
+import { Button, Input, ScreenContainer, Text } from '@presentation/components/ui';
+import { GradientBackground } from '@presentation/components/ui/GradientBackground';
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Dimensions, Image, PanResponder, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from 'react-native-reanimated';
+import { login_styles } from './styles/login-styles';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  const translateY = useSharedValue(SCREEN_HEIGHT * 0.8);
+  const cardHeight = SCREEN_HEIGHT * 0.8;
+
+  const showCard = () => {
+    setIsOpen(true);
+    translateY.value = withSpring(0, {
+      damping: 25,
+      stiffness: 200,
+      mass: 1,
+    });
+  };
+
+  const hideCard = () => {
+    setIsOpen(false);
+    translateY.value = withSpring(cardHeight, {
+      damping: 15,
+      stiffness: 400,
+      mass: 0.6,
+    });
+  };
+
+  const startY = useSharedValue(0);
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
+    },
+    onPanResponderGrant: () => {
+      startY.value = translateY.value;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      const newY = startY.value + gestureState.dy;
+      if (newY >= 0) {
+        translateY.value = newY;
+      }
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      const dragDistance = gestureState.dy;
+      const dragPercentage = (dragDistance / cardHeight) * 100;
+      const velocity = gestureState.vy;
+
+      if (dragPercentage > 10 || velocity > 0.5) {
+        setIsOpen(false);
+        translateY.value = withSpring(cardHeight, {
+          damping: 15,
+          stiffness: 400,
+          mass: 0.6,
+        });
+      } else {
+        translateY.value = withSpring(0, {
+          damping: 15,
+          stiffness: 400,
+          mass: 0.6,
+        });
+      }
+    },
+  });
+
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
 
   return (
-    <Layout style={styles.container} level="1">
-      <Card style={styles.card}>
-        <Text variant="h4" style={styles.title}>
-          Iniciar Sesión
-        </Text>
-        <Text variant="subtitle2" style={styles.subtitle}>
-          Bienvenido a CoreSales
-        </Text>
-        
-        <Input
-          label="Email"
-          placeholder="Ingresa tu email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
-        
-        <Input
-          label="Contraseña"
-          placeholder="Ingresa tu contraseña"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
-        
-        <Button
-          title="Iniciar Sesión"
-          style={styles.button}
-          onPress={() => console.log('Login pressed')}
-        />
-        
-        <Layout style={styles.navigation} level="1">
-          <Link href="/auth/register" asChild>
-            <Button
-              title="¿No tienes cuenta? Regístrate"
-              variant="ghost"
-              size="small"
-            />
-          </Link>
-          
-          <Link href="/auth/forgot-password" asChild>
-            <Button
-              title="¿Olvidaste tu contraseña?"
-              variant="ghost"
-              size="small"
-            />
-          </Link>
-        </Layout>
-      </Card>
-    </Layout>
+    <GradientBackground>
+      <ScreenContainer>
+        <View style={login_styles.container}>
+          <View style={[isOpen ? login_styles.headerContent : login_styles.mainContent]}>
+            {!isOpen && (
+              <>
+                <View style={login_styles.logoContainer}>
+                  <Image
+                    source={require('@/assets/images/icon-nextcore.png')}
+                    style={login_styles.logo}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                <Text variant='hero' style={login_styles.title}>
+                  NextCore
+                </Text>
+                <Text variant='subtitle1' style={login_styles.subtitle}>
+                  Gestiona tus ventas con eficiencia
+                </Text>
+              </>
+            )}
+          </View>
+
+          {!isOpen && (
+            <View style={login_styles.bottomSection}>
+              <Button
+                title="Iniciar sesión"
+                style={login_styles.button}
+                onPress={showCard}
+                size='large'
+                textStyle={{ fontWeight: 'medium' }}
+              />
+            </View>
+          )}
+
+          {isOpen && (
+            <Animated.View style={[login_styles.loginCard, cardAnimatedStyle]}>
+              <View style={login_styles.handle} {...panResponder.panHandlers}>
+                <TouchableOpacity
+                  style={login_styles.handleButton}
+                  onPress={hideCard}
+                  activeOpacity={0.7}
+                />
+              </View>
+
+              <View style={login_styles.cardContent}>
+                <View style={login_styles.form}>
+                  <Input placeholder='Correo electrónico' error='Correo malo' label='Correo electronico:' />
+                  <Input placeholder='Contraseña' secureTextEntry={true} error='Correo malo' label='Contraseña:' />
+                </View>
+              </View>
+            </Animated.View>
+          )}
+        </View>
+      </ScreenContainer>
+    </GradientBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    padding: 20,
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  navigation: {
-    alignItems: 'center',
-    gap: 8,
-  },
-});

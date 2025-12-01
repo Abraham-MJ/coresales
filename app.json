@@ -12,6 +12,12 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.coresales.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDqyp7ZhVq5Oj7sLwmP_QeLs26GWS4oQIs"
+        }
+      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -30,19 +36,23 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#1B4D3E"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "424b6d58-65cc-45ec-8cd8-62ffb34a540e"
+      }
     }
   }
 }

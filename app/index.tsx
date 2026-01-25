@@ -4,7 +4,7 @@ export default function AppIndex() {
   const isAuthenticated = false;
 
   if (isAuthenticated) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(app)/(tabs)" />;
   }
 
   return <Redirect href="/auth/login" />;

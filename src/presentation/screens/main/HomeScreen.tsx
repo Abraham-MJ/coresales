@@ -1,12 +1,21 @@
-import Feather from '@expo/vector-icons/Feather';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle } from 'react-native-svg';
-import { home_styles } from './styles/home-styles';
+import { useRouter } from "expo-router";
+import {
+  BriefcaseDollarIcon,
+  Calendar03Icon,
+  PlusSignSquareIcon,
+  UserIdVerificationIcon,
+} from "hugeicons-react-native";
+import React, { memo } from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
+import { home_styles } from "./styles/home-styles";
+
+const BriefcaseIcon = memo(BriefcaseDollarIcon);
+const UserIcon = memo(UserIdVerificationIcon);
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -16,27 +25,73 @@ export default function HomeScreen() {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
+  const STATIC_TOTAL_HEIGHT = 110;
+  const MIN_BOTTOM_PADDING = 8;
+
+  const insets = useSafeAreaInsets();
+  const barBottomPadding = Math.max(insets.bottom, MIN_BOTTOM_PADDING);
+
+  const finalContentMarginBottom = STATIC_TOTAL_HEIGHT + barBottomPadding;
+
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#0C352E" />
       <View style={home_styles.container}>
-        <SafeAreaView edges={['top']} style={{ backgroundColor: '#0C352E' }} />
-        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          <View style={home_styles.header}>
+        <SafeAreaView
+          edges={["top"]}
+          style={{
+            backgroundColor: "#0C352E",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+          }}
+        >
+          <View style={[home_styles.header, { paddingBottom: 20 }]}>
             <View style={home_styles.headerText}>
               <Text style={home_styles.greeting}>¡Hola Bienvenido!</Text>
               <Text style={home_styles.userName}>Abraham Moreno</Text>
             </View>
-            <Image 
-              source={require('@/assets/images/user-image.jpg')}
-              style={home_styles.avatar}
-            />
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/(app)/(tabs)/profile");
+              }}
+            >
+              <Image
+                source={require("@/assets/images/user-image.jpg")}
+                style={home_styles.avatar}
+              />
+            </TouchableOpacity>
           </View>
+        </SafeAreaView>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          contentContainerStyle={{
+            paddingTop: 90,
+            paddingBottom: finalContentMarginBottom,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#0C352E",
+              paddingBottom: 240,
+              marginTop: -100,
+            }}
+          />
 
           <View style={home_styles.content}>
             <View style={home_styles.totalCard}>
               <Text style={home_styles.totalLabel}>Total por cobrar</Text>
               <Text style={home_styles.totalAmount}>12.000.000 COP</Text>
+              <View
+                style={{
+                  borderWidth: 0.6,
+                  borderColor: "#E9EEF8",
+                  marginHorizontal: -20,
+                }}
+              />
               <View style={home_styles.statsRow}>
                 <View style={home_styles.stat}>
                   <Text style={home_styles.statNumber}>50</Text>
@@ -52,11 +107,15 @@ export default function HomeScreen() {
             <View style={home_styles.performanceCard}>
               <View style={home_styles.performanceLeft}>
                 <View style={home_styles.performanceIcon}>
-                  <MaterialCommunityIcons name="chart-line" size={24} color="#0C352E" />
+                  <BriefcaseIcon size={28} key={1} color="#0C352E" variant="stroke" />
                 </View>
                 <View style={home_styles.performanceText}>
-                  <Text style={home_styles.performanceTitle}>Rendimiento de ventas</Text>
-                  <Text style={home_styles.performanceSubtitle}>100 Ventas confirmadas</Text>
+                  <Text style={home_styles.performanceTitle}>
+                    Rendimiento de ventas
+                  </Text>
+                  <Text style={home_styles.performanceSubtitle}>
+                    100 Ventas confirmadas
+                  </Text>
                 </View>
               </View>
               <View style={home_styles.progressCircle}>
@@ -65,7 +124,7 @@ export default function HomeScreen() {
                     cx={28}
                     cy={28}
                     r={radius}
-                    stroke="#E5E5E5"
+                    stroke="#A5C3BE"
                     strokeWidth={strokeWidth}
                     fill="none"
                   />
@@ -87,34 +146,61 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={home_styles.addLeadButton}
-              onPress={() => router.push('/create-lead')}
+              onPress={() => router.push("/leads/create")}
+              activeOpacity={0.7}
             >
-              <Ionicons name="person-add-outline" size={24} color="#FFFFFF" />
+              <View style={home_styles.addLeadIcon}>
+                <UserIcon key={2} size={28} color="#FFFFFF" variant="stroke" />
+              </View>
               <Text style={home_styles.addLeadText}>Agregar lead</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={home_styles.activitiesCard}
-              onPress={() => router.push('/activities')}
-              activeOpacity={0.7}
-            >
+            <View style={home_styles.activitiesCard}>
               <View style={home_styles.sectionHeader}>
-                <Text style={home_styles.sectionTitle}>Tus actividades para hoy</Text>
-                <TouchableOpacity style={home_styles.addButton}>
-                  <Feather name="plus" size={16} color="#232323" />
+                <Text style={home_styles.sectionTitle}>
+                  Tus actividades para hoy
+                </Text>
+                <TouchableOpacity
+                  style={home_styles.addButton}
+                  onPress={() => router.push("/activities")}
+                  activeOpacity={0.7}
+                >
+                  <PlusSignSquareIcon
+                    size={28}
+                    color="#141B34"
+                    variant="stroke"
+                    key={3}
+                  />
                 </TouchableOpacity>
               </View>
 
-              <View style={{ position: 'relative' }}>
+              <View
+                style={{
+                  borderWidth: 0.6,
+                  borderColor: "#E9EEF8",
+                  marginHorizontal: -20,
+                }}
+              />
+
+              <View style={{ position: "relative", marginTop: 16 }}>
                 <View style={home_styles.activityItem}>
                   <View style={home_styles.activityIconContainer}>
-                    <Feather name="calendar" size={20} color="#0C352E" />
+                    <Calendar03Icon
+                      size={24}
+                      color="#0C352E"
+                      variant="stroke"
+                      key={4}
+                    />
                   </View>
                   <View style={home_styles.activityContent}>
-                    <Text style={home_styles.activityTitle}>Prospeccion de Zona X</Text>
-                    <Text style={home_styles.activityTime}>Diciembre | 09:10 AM</Text>
+                    <Text style={home_styles.activityTitle}>
+                      Prospeccion de Zona X
+                    </Text>
+                    <Text style={home_styles.activityTime}>
+                      Diciembre | 09:10 AM
+                    </Text>
                   </View>
                 </View>
                 <View style={home_styles.activityLine} />
@@ -122,30 +208,57 @@ export default function HomeScreen() {
 
               <View style={home_styles.activityItem}>
                 <View style={home_styles.activityIconContainer}>
-                  <Feather name="calendar" size={20} color="#0C352E" />
+                  <Calendar03Icon key={5} size={24} color="#0C352E" variant="stroke" />
                 </View>
                 <View style={home_styles.activityContent}>
-                  <Text style={home_styles.activityTitle}>Reunion con Cliente A</Text>
-                  <Text style={home_styles.activityTime}>Diciembre | 09:10 AM</Text>
+                  <Text style={home_styles.activityTitle}>
+                    Reunion con Cliente A
+                  </Text>
+                  <Text style={home_styles.activityTime}>
+                    Diciembre | 09:10 AM
+                  </Text>
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
 
             <View style={home_styles.recentCard}>
               <View style={home_styles.sectionHeader}>
                 <Text style={home_styles.sectionTitle}>Actividad reciente</Text>
                 <TouchableOpacity style={home_styles.addButton}>
-                  <Feather name="plus" size={16} color="#232323" />
+                  <PlusSignSquareIcon
+                    size={28}
+                    color="#141B34"
+                    variant="stroke"
+                    key={6}
+                  />
                 </TouchableOpacity>
               </View>
+
+              <View
+                style={{
+                  borderWidth: 0.6,
+                  borderColor: "#E9EEF8",
+                  marginHorizontal: -20,
+                }}
+              />
+
               <View style={home_styles.recentItem}>
                 <View style={home_styles.recentLeft}>
                   <Text style={home_styles.recentName}>Juan Perez</Text>
                   <Text style={home_styles.recentDescription}>Lead creado</Text>
                 </View>
                 <View style={home_styles.recentRight}>
-                  <View style={[home_styles.statusBadge, { borderColor: '#FFB800', backgroundColor: '#FFF9E6' }]}>
-                    <Text style={[home_styles.statusText, { color: '#FFB800' }]}>En revision</Text>
+                  <View
+                    style={[
+                      home_styles.statusBadge,
+                      { borderColor: "#FFB800", backgroundColor: "#FFF9E6" },
+                    ]}
+                  >
+                    <Text
+                      style={[home_styles.statusText, { color: "#FFB800" }]}
+                    >
+                      En revision
+                    </Text>
                   </View>
                   <Text style={home_styles.timeAgo}>Hace 2 horas</Text>
                 </View>
@@ -154,11 +267,22 @@ export default function HomeScreen() {
               <View style={home_styles.recentItem}>
                 <View style={home_styles.recentLeft}>
                   <Text style={home_styles.recentName}>Ana Paola</Text>
-                  <Text style={home_styles.recentDescription}>Venta registrada</Text>
+                  <Text style={home_styles.recentDescription}>
+                    Venta registrada
+                  </Text>
                 </View>
                 <View style={home_styles.recentRight}>
-                  <View style={[home_styles.statusBadge, { borderColor: '#FF6B6B', backgroundColor: '#FFE6E6' }]}>
-                    <Text style={[home_styles.statusText, { color: '#FF6B6B' }]}>Pendiente</Text>
+                  <View
+                    style={[
+                      home_styles.statusBadge,
+                      { borderColor: "#FF6B6B", backgroundColor: "#FFE6E6" },
+                    ]}
+                  >
+                    <Text
+                      style={[home_styles.statusText, { color: "#FF6B6B" }]}
+                    >
+                      Pendiente
+                    </Text>
                   </View>
                   <Text style={home_styles.timeAgo}>Hace 4 horas</Text>
                 </View>

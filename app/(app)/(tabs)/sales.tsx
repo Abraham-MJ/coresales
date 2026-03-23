@@ -1,3 +1,3 @@
-import CreateSaleScreen from '@presentation/screens/main/CreateSaleScreen';
+import CreateSaleScreen from '@presentation/screens/main/SalesScreen';
 
 export default CreateSaleScreen;

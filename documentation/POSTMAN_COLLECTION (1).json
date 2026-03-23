@@ -1,0 +1,712 @@
+{
+  "info": {
+    "name": "NextCore Mobile - Sales Rep App",
+    "description": "Colección completa de endpoints para la app móvil de vendedores.\n\nVariables de entorno requeridas:\n- base_url: URL del servidor (ej: http://localhost:3001/api)\n- token: Token de autenticación obtenido en login\n- workspace_id: ID del workspace activo\n- user_id: ID del usuario logueado\n- sales_rep_id: ID del vendedor (obtenido de /sales-reps/me)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001/api" },
+    { "key": "token", "value": "" },
+    { "key": "workspace_id", "value": "" },
+    { "key": "user_id", "value": "" },
+    { "key": "sales_rep_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}" }]
+  },
+  "item": [
+    {
+      "name": "1. Auth",
+      "description": "Autenticación y recuperación de contraseña",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  pm.collectionVariables.set('workspace_id', res.data.workspace_id);",
+                  "  pm.collectionVariables.set('user_id', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendedor@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendedor@example.com\"\n}"
+            },
+            "url": "{{base_url}}/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendedor@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": "{{base_url}}/auth/verify-otp"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendedor@example.com\",\n  \"otp\": \"123456\",\n  \"password\": \"NewPass123\"\n}"
+            },
+            "url": "{{base_url}}/auth/reset-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Sales Rep Profile",
+      "description": "Perfil y dashboard del vendedor logueado",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('sales_rep_id', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/sales-reps/me?workspace_id={{workspace_id}}&user_id={{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["sales-reps", "me"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "user_id", "value": "{{user_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/sales-reps/me/dashboard?workspace_id={{workspace_id}}&user_id={{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["sales-reps", "me", "dashboard"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "user_id", "value": "{{user_id}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Wizard Configs",
+      "description": "Configuración dinámica de formularios por entity_type",
+      "item": [
+        {
+          "name": "Get Lead Form Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wizard-configs/default?workspace_id={{workspace_id}}&entity_type=lead",
+              "host": ["{{base_url}}"],
+              "path": ["wizard-configs", "default"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "entity_type", "value": "lead" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Client Form Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wizard-configs/default?workspace_id={{workspace_id}}&entity_type=client",
+              "host": ["{{base_url}}"],
+              "path": ["wizard-configs", "default"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "entity_type", "value": "client" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Contract Form Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wizard-configs/default?workspace_id={{workspace_id}}&entity_type=contract",
+              "host": ["{{base_url}}"],
+              "path": ["wizard-configs", "default"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "entity_type", "value": "contract" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Data Sources",
+      "description": "Endpoints para poblar campos select/multiselect del wizard",
+      "item": [
+        {
+          "name": "Get ISP Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/isp-plans?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["isp-plans"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Sales Reps (with user info)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/sales-reps?workspace_id={{workspace_id}}&with_user_info=true",
+              "host": ["{{base_url}}"],
+              "path": ["sales-reps"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "with_user_info", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lead Statuses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/lead-statuses?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["lead-statuses"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Branches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/branches?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["branches"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Zones (by branch)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/zones?workspace_id={{workspace_id}}&branch_id=BRANCH_ID_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["zones"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "branch_id", "value": "BRANCH_ID_HERE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Clients",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/clients?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["clients"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Leads",
+      "description": "CRUD de leads",
+      "item": [
+        {
+          "name": "List Leads (my leads)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/leads?workspace_id={{workspace_id}}&sales_rep_id={{sales_rep_id}}&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["leads"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "sales_rep_id", "value": "{{sales_rep_id}}" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lead by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/leads/LEAD_ID_HERE?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "LEAD_ID_HERE"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspace_id\": \"{{workspace_id}}\",\n  \"sales_rep_id\": \"{{sales_rep_id}}\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Perez\",\n  \"email\": \"juan@example.com\",\n  \"phone_code\": \"+57\",\n  \"phone\": \"3001234567\",\n  \"lead_status_id\": \"LEAD_STATUS_UUID_HERE\",\n  \"custom_data\": {\n    \"address\": \"Calle 123\",\n    \"stratum\": 3\n  }\n}"
+            },
+            "url": "{{base_url}}/leads"
+          }
+        },
+        {
+          "name": "Update Lead",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lead_status_id\": \"NEW_STATUS_UUID_HERE\",\n  \"custom_data\": {\n    \"notes\": \"Contactado por telefono\"\n  }\n}"
+            },
+            "url": "{{base_url}}/leads/LEAD_ID_HERE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Clients",
+      "description": "CRUD de clientes",
+      "item": [
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/clients?workspace_id={{workspace_id}}&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["clients"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Client by Document",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/clients/by-document?workspace_id={{workspace_id}}&document_number=1234567890",
+              "host": ["{{base_url}}"],
+              "path": ["clients", "by-document"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "document_number", "value": "1234567890" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspace_id\": \"{{workspace_id}}\",\n  \"client_type\": \"persona_natural\",\n  \"first_name\": \"Ana\",\n  \"last_name\": \"Cardozo\",\n  \"document_type\": \"CC\",\n  \"document_number\": \"1234567890\",\n  \"email\": \"ana@example.com\",\n  \"phone_code\": \"+57\",\n  \"phone\": \"3007654321\",\n  \"client_status\": \"activo\",\n  \"custom_data\": {\n    \"address\": \"Calle 123 #45-67\"\n  }\n}"
+            },
+            "url": "{{base_url}}/clients"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Contracts",
+      "description": "CRUD de contratos",
+      "item": [
+        {
+          "name": "List Contracts (by client)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/contracts?workspace_id={{workspace_id}}&client_id=CLIENT_ID_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["contracts"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "client_id", "value": "CLIENT_ID_HERE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Contract",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspace_id\": \"{{workspace_id}}\",\n  \"client_id\": \"CLIENT_ID_HERE\",\n  \"service_plan_id\": \"PLAN_ID_HERE\",\n  \"sales_rep_id\": \"{{sales_rep_id}}\",\n  \"start_date\": \"2026-03-04\",\n  \"monthly_amount\": 89000,\n  \"installation_address\": \"Calle 123 #45-67, Bogota\",\n  \"latitude\": 4.6097,\n  \"longitude\": -74.0817,\n  \"has_coverage\": 1,\n  \"custom_data\": {\n    \"signature_url\": \"https://s3.amazonaws.com/.../firma.png\"\n  }\n}"
+            },
+            "url": "{{base_url}}/contracts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Sales",
+      "description": "CRUD de ventas",
+      "item": [
+        {
+          "name": "List Sales (my sales)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/sales?workspace_id={{workspace_id}}&sales_rep_id={{sales_rep_id}}&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["sales"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "sales_rep_id", "value": "{{sales_rep_id}}" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Sale",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspace_id\": \"{{workspace_id}}\",\n  \"client_id\": \"CLIENT_ID_HERE\",\n  \"sales_rep_id\": \"{{sales_rep_id}}\",\n  \"total_amount\": 150000,\n  \"items\": [\n    {\n      \"product_id\": \"PLAN_ID_HERE\",\n      \"name\": \"Plan Internet 100Mbps\",\n      \"type\": \"service\",\n      \"quantity\": 1,\n      \"unit_price\": 89000\n    },\n    {\n      \"product_id\": \"PRODUCT_ID_HERE\",\n      \"name\": \"Router WiFi\",\n      \"type\": \"product\",\n      \"quantity\": 1,\n      \"unit_price\": 61000\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/sales"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Tasks",
+      "description": "Tareas/actividades del vendedor",
+      "item": [
+        {
+          "name": "List My Tasks (today)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tasks?workspace_id={{workspace_id}}&assigned_to={{sales_rep_id}}&status=pending&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "assigned_to", "value": "{{sales_rep_id}}" },
+                { "key": "status", "value": "pending" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspace_id\": \"{{workspace_id}}\",\n  \"assigned_to\": \"{{sales_rep_id}}\",\n  \"title\": \"Llamar a Juan Perez\",\n  \"description\": \"Seguimiento del lead\",\n  \"type\": \"call\",\n  \"priority\": \"high\",\n  \"status\": \"pending\",\n  \"due_date\": \"2026-02-11\"\n}"
+            },
+            "url": "{{base_url}}/tasks"
+          }
+        },
+        {
+          "name": "Update Task Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": "{{base_url}}/tasks/TASK_ID_HERE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Activity Feed",
+      "description": "Feed de actividad reciente (leads + ventas combinados)",
+      "item": [
+        {
+          "name": "Get Activity Feed",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/activity-feed?workspace_id={{workspace_id}}&sales_rep_id={{sales_rep_id}}&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["activity-feed"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "sales_rep_id", "value": "{{sales_rep_id}}" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Flow Automation",
+      "description": "Mapeo de campos entre entidades (lead→client, client→contract)",
+      "item": [
+        {
+          "name": "Get Lead to Client Mapping",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/flow-automation/lead/client?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["flow-automation", "lead", "client"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Client to Contract Mapping",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/flow-automation/client/contract?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["flow-automation", "client", "contract"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. OTP",
+      "description": "Generacion y verificacion de codigos OTP para firma de contratos",
+      "item": [
+        {
+          "name": "Generate OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@example.com\",\n  \"purpose\": \"contract_sign\",\n  \"user_name\": \"Juan Perez\",\n  \"workspace_id\": \"{{workspace_id}}\"\n}"
+            },
+            "url": "{{base_url}}/otp/generate"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@example.com\",\n  \"otp\": \"123456\",\n  \"purpose\": \"contract_sign\",\n  \"mark_used\": true\n}"
+            },
+            "url": "{{base_url}}/otp/verify"
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. File Upload",
+      "description": "Subida de archivos (firma, fotos)",
+      "item": [
+        {
+          "name": "Upload File (signature/photo)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" },
+                { "key": "workspace_id", "value": "{{workspace_id}}", "type": "text" }
+              ]
+            },
+            "url": "{{base_url}}/s3/upload"
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Workspace",
+      "description": "Información del workspace (nombre, logo, moneda, tema)",
+      "item": [
+        {
+          "name": "Get Workspace Info",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/workspaces?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["workspaces"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. FTTH — Verificación de Disponibilidad",
+      "description": "Endpoints para verificar cobertura FTTH (fibra óptica) en una ubicación. Provider-agnostic: soporta OZmap y otros proveedores.",
+      "item": [
+        {
+          "name": "FTTH Status (¿está configurado?)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/ftth/status?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["ftth", "status"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "FTTH Viability (NAPs cercanas)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/ftth/viability?workspace_id={{workspace_id}}&lat=4.6097&lng=-74.0817",
+              "host": ["{{base_url}}"],
+              "path": ["ftth", "viability"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "lat", "value": "4.6097" },
+                { "key": "lng", "value": "-74.0817" },
+                { "key": "radius", "value": "700", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "FTTH Splitters (puertos de NAP)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/ftth/splitters?workspace_id={{workspace_id}}&nap_id=NAP_ID_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["ftth", "splitters"],
+              "query": [
+                { "key": "workspace_id", "value": "{{workspace_id}}" },
+                { "key": "nap_id", "value": "NAP_ID_HERE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "FTTH Create Prospect",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Perez\",\n  \"email\": \"juan@example.com\",\n  \"phone\": \"3001234567\",\n  \"address\": \"Calle 123 #45-67\",\n  \"lat\": 4.6097,\n  \"lng\": -74.0817,\n  \"boxId\": \"NAP_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ftth/prospects?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["ftth", "prospects"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "FTTH Create Property",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_name\": \"Juan Perez\",\n  \"address\": \"Calle 123 #45-67\",\n  \"lat\": 4.6097,\n  \"lng\": -74.0817,\n  \"boxId\": \"NAP_ID_HERE\",\n  \"portIndex\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ftth/properties?workspace_id={{workspace_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["ftth", "properties"],
+              "query": [{ "key": "workspace_id", "value": "{{workspace_id}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

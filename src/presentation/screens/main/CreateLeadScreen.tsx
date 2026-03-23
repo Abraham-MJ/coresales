@@ -1,394 +1,207 @@
-import Feather from "@expo/vector-icons/Feather";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { DynamicField } from "@presentation/components/DynamicField";
+import { useCreateLead } from "@presentation/hooks/useCreateLead";
+import { useWizardConfig } from "@presentation/hooks/useWizardConfig";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import React, { useState, useEffect } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import { Input } from "../../components";
 import { create_lead_styles } from "./styles/create-lead-styles";
 
 export default function CreateLeadScreen() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [docType, setDocType] = useState("V");
-  const [docNumber, setDocNumber] = useState("");
-  const [phoneCode, setPhoneCode] = useState("+57");
-  const [phone, setPhone] = useState("");
-  const [phoneCode2, setPhoneCode2] = useState("+57");
-  const [phone2, setPhone2] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [reference, setReference] = useState("");
-  const [location, setLocation] = useState({
-    latitude: 4.711,
-    longitude: -74.0721,
-  });
+  const params = useLocalSearchParams();
+  const { config, loading: configLoading } = useWizardConfig('lead');
+  const { createLead, loading: createLoading } = useCreateLead();
+  
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const mapStyle = [
-    {
-      featureType: "all",
-      elementType: "geometry.fill",
-      stylers: [
+  const [isPreFilled, setIsPreFilled] = useState(false);
+
+  useEffect(() => {
+    // Pre-llenar datos de ubicación si vienen de SalesScreen (solo una vez)
+    if (params.prefilledAddress && config && !isPreFilled) {
+      console.log('=== PRE-FILL DEBUG ===');
+      console.log('Params received:', params);
+      
+      const prefilledData: Record<string, any> = {};
+      
+      // Mapear los parámetros a los campos correctos del wizard
+      config.steps.forEach(step => {
+        step.fields.forEach(field => {
+          const fieldKey = field.is_system_field && field.system_field_mapping 
+            ? field.system_field_mapping 
+            : field.name;
+          
+          console.log(`Checking field: ${field.label} (key: ${fieldKey}, name: ${field.name})`);
+          
+          // Buscar coincidencias con los datos de SalesScreen
+          if (params.prefilledAddress && 
+              (fieldKey === 'installation_address' || 
+               fieldKey === 'address' || 
+               field.name === 'installation_address' ||
+               field.name === 'address' ||
+               field.name === 'direccion_instalacion')) {
+            console.log(`✓ Matched address field: ${fieldKey}`);
+            prefilledData[fieldKey] = params.prefilledAddress;
+          }
+          
+          if (params.prefilledReference && 
+              (fieldKey === 'installation_reference' || 
+               fieldKey === 'reference' ||
+               fieldKey === 'punto_de_referencia' ||
+               field.name === 'installation_reference' ||
+               field.name === 'reference' ||
+               field.name === 'referencia' ||
+               field.name === 'punto_de_referencia')) {
+            console.log(`✓ Matched reference field: ${fieldKey}`);
+            prefilledData[fieldKey] = params.prefilledReference;
+          }
+          
+          // Para el campo de ubicación (mapa), guardar las coordenadas como objeto
+          if ((params.prefilledLatitude || params.prefilledLongitude) &&
+              (fieldKey === 'seleccion_de_ubicacion' || 
+               field.name === 'seleccion_de_ubicacion' ||
+               fieldKey === 'location' ||
+               field.name === 'location')) {
+            console.log(`✓ Matched location field: ${fieldKey}`);
+            prefilledData[fieldKey] = {
+              address: params.prefilledAddress || '',
+              latitude: parseFloat(params.prefilledLatitude as string),
+              longitude: parseFloat(params.prefilledLongitude as string)
+            };
+          }
+          
+          if (params.prefilledLatitude && 
+              (fieldKey === 'latitude' || field.name === 'latitude' || field.name === 'latitud')) {
+            console.log(`✓ Matched latitude field: ${fieldKey}`);
+            prefilledData[fieldKey] = parseFloat(params.prefilledLatitude as string);
+          }
+          
+          if (params.prefilledLongitude && 
+              (fieldKey === 'longitude' || field.name === 'longitude' || field.name === 'longitud')) {
+            console.log(`✓ Matched longitude field: ${fieldKey}`);
+            prefilledData[fieldKey] = parseFloat(params.prefilledLongitude as string);
+          }
+          
+          if (params.hasCoverage !== undefined && 
+              (fieldKey === 'has_coverage' || field.name === 'has_coverage' || field.name === 'tiene_cobertura')) {
+            console.log(`✓ Matched coverage field: ${fieldKey}`);
+            prefilledData[fieldKey] = params.hasCoverage === '1' ? 1 : 0;
+          }
+        });
+      });
+      
+      console.log('Pre-filled data:', prefilledData);
+      setFormData(prefilledData);
+      setIsPreFilled(true);
+    }
+  }, [params.prefilledAddress, config, isPreFilled]);
+
+  const handleFieldChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+    if (errors[fieldName]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    // Validar campos requeridos del wizard
+    config?.steps.forEach(step => {
+      step.fields.forEach(field => {
+        const fieldKey = field.is_system_field && field.system_field_mapping 
+          ? field.system_field_mapping 
+          : field.name;
+        
+        if (field.is_required && !formData[fieldKey]) {
+          newErrors[fieldKey] = `${field.label} es requerido`;
+        }
+      });
+    });
+
+    // Validar campos obligatorios de la entidad Lead
+    if (!formData.first_name || !formData.first_name.trim()) {
+      newErrors.first_name = 'El nombre es requerido';
+    }
+    if (!formData.last_name || !formData.last_name.trim()) {
+      newErrors.last_name = 'El apellido es requerido';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      Alert.alert('Error', 'Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    const body: Record<string, any> = {};
+    const customData: Record<string, any> = {};
+
+    config?.steps.forEach(step => {
+      step.fields.forEach(field => {
+        const fieldKey = field.is_system_field && field.system_field_mapping 
+          ? field.system_field_mapping 
+          : field.name;
+        const value = formData[fieldKey];
+        
+        if (value !== undefined && value !== '') {
+          if (field.is_system_field && field.system_field_mapping) {
+            body[field.system_field_mapping] = value;
+          } else {
+            customData[field.name] = value;
+          }
+        }
+      });
+    });
+
+    if (Object.keys(customData).length > 0) {
+      body.custom_data = customData;
+    }
+
+    const result = await createLead(body);
+    
+    if (result) {
+      Alert.alert('Éxito', 'Lead creado correctamente', [
         {
-          visibility: "on",
+          text: 'OK',
+          onPress: () => router.back(),
         },
-      ],
-    },
-    {
-      featureType: "administrative",
-      elementType: "all",
-      stylers: [
-        {
-          color: "#f2f2f2",
-        },
-      ],
-    },
-    {
-      featureType: "administrative",
-      elementType: "labels.text.fill",
-      stylers: [
-        {
-          color: "#686868",
-        },
-        {
-          visibility: "on",
-        },
-      ],
-    },
-    {
-      featureType: "landscape",
-      elementType: "all",
-      stylers: [
-        {
-          color: "#f2f2f2",
-        },
-      ],
-    },
-    {
-      featureType: "poi",
-      elementType: "all",
-      stylers: [
-        {
-          visibility: "off",
-        },
-      ],
-    },
-    {
-      featureType: "poi.park",
-      elementType: "all",
-      stylers: [
-        {
-          visibility: "on",
-        },
-      ],
-    },
-    {
-      featureType: "poi.park",
-      elementType: "labels.icon",
-      stylers: [
-        {
-          visibility: "off",
-        },
-      ],
-    },
-    {
-      featureType: "road",
-      elementType: "all",
-      stylers: [
-        {
-          saturation: -100,
-        },
-        {
-          lightness: 45,
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "all",
-      stylers: [
-        {
-          visibility: "simplified",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "geometry.fill",
-      stylers: [
-        {
-          lightness: "-22",
-        },
-        {
-          visibility: "on",
-        },
-        {
-          color: "#b4b4b4",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "geometry.stroke",
-      stylers: [
-        {
-          saturation: "-51",
-        },
-        {
-          lightness: "11",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "labels.text",
-      stylers: [
-        {
-          saturation: "3",
-        },
-        {
-          lightness: "-56",
-        },
-        {
-          visibility: "simplified",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "labels.text.fill",
-      stylers: [
-        {
-          lightness: "-52",
-        },
-        {
-          color: "#9094a0",
-        },
-        {
-          visibility: "simplified",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "labels.text.stroke",
-      stylers: [
-        {
-          weight: "6.13",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway",
-      elementType: "labels.icon",
-      stylers: [
-        {
-          weight: "1.24",
-        },
-        {
-          saturation: "-100",
-        },
-        {
-          lightness: "-10",
-        },
-        {
-          gamma: "0.94",
-        },
-        {
-          visibility: "off",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway.controlled_access",
-      elementType: "geometry.fill",
-      stylers: [
-        {
-          visibility: "on",
-        },
-        {
-          color: "#b4b4b4",
-        },
-        {
-          weight: "5.40",
-        },
-        {
-          lightness: "7",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway.controlled_access",
-      elementType: "labels.text",
-      stylers: [
-        {
-          visibility: "simplified",
-        },
-        {
-          color: "#231f1f",
-        },
-      ],
-    },
-    {
-      featureType: "road.highway.controlled_access",
-      elementType: "labels.text.fill",
-      stylers: [
-        {
-          visibility: "simplified",
-        },
-        {
-          color: "#595151",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "geometry",
-      stylers: [
-        {
-          lightness: "-16",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "geometry.fill",
-      stylers: [
-        {
-          visibility: "on",
-        },
-        {
-          color: "#d7d7d7",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "labels.text",
-      stylers: [
-        {
-          color: "#282626",
-        },
-        {
-          visibility: "simplified",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "labels.text.fill",
-      stylers: [
-        {
-          saturation: "-41",
-        },
-        {
-          lightness: "-41",
-        },
-        {
-          color: "#2a4592",
-        },
-        {
-          visibility: "simplified",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "labels.text.stroke",
-      stylers: [
-        {
-          weight: "1.10",
-        },
-        {
-          color: "#ffffff",
-        },
-      ],
-    },
-    {
-      featureType: "road.arterial",
-      elementType: "labels.icon",
-      stylers: [
-        {
-          visibility: "on",
-        },
-      ],
-    },
-    {
-      featureType: "road.local",
-      elementType: "geometry.fill",
-      stylers: [
-        {
-          lightness: "-16",
-        },
-        {
-          weight: "0.72",
-        },
-      ],
-    },
-    {
-      featureType: "road.local",
-      elementType: "labels.text.fill",
-      stylers: [
-        {
-          lightness: "-37",
-        },
-        {
-          color: "#2a4592",
-        },
-      ],
-    },
-    {
-      featureType: "transit",
-      elementType: "all",
-      stylers: [
-        {
-          visibility: "off",
-        },
-      ],
-    },
-    {
-      featureType: "transit.line",
-      elementType: "geometry.fill",
-      stylers: [
-        {
-          visibility: "off",
-        },
-        {
-          color: "#eeed6a",
-        },
-      ],
-    },
-    {
-      featureType: "transit.line",
-      elementType: "geometry.stroke",
-      stylers: [
-        {
-          visibility: "off",
-        },
-        {
-          color: "#0a0808",
-        },
-      ],
-    },
-    {
-      featureType: "water",
-      elementType: "all",
-      stylers: [
-        {
-          color: "#b7e4f4",
-        },
-        {
-          visibility: "on",
-        },
-      ],
-    },
-  ];
+      ]);
+    }
+  };
+
+  if (configLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F1F3' }}>
+        <ActivityIndicator size={80} color="#0C352E" />
+        <Text style={{ marginTop: 16, color: '#666' }}>Cargando los campos...</Text>
+      </View>
+    );
+  }
+
+  if (!config) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F1F3' }}>
+        <Text style={{ color: '#E53935' }}>Error al cargar configuración</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -399,120 +212,62 @@ export default function CreateLeadScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={create_lead_styles.form}>
-            <View style={create_lead_styles.row}>
-              <Input
-                label="Nombres"
-                value={firstName}
-                onChangeText={setFirstName}
-                containerStyle={create_lead_styles.halfField}
-              />
-              <Input
-                label="Apellidos"
-                value={lastName}
-                onChangeText={setLastName}
-                containerStyle={create_lead_styles.halfField}
-              />
-            </View>
-
-            <Input
-              label="Documento de identidad"
-              hasSelect
-              selectOptions={[
-                { label: "V", value: "V" },
-                { label: "P", value: "P" },
-                { label: "J", value: "J" },
-              ]}
-              selectValue={docType}
-              onSelectChange={setDocType}
-              value={docNumber}
-              onChangeText={setDocNumber}
-              keyboardType="numeric"
-              rightIcon={<Feather name="check" size={18} color="#D3D3D3" />}
-            />
-
-            <Input
-              label="Teléfono"
-              hasSelect
-              selectOptions={[
-                { label: "+57", value: "+57" },
-                { label: "+1", value: "+1" },
-                { label: "+58", value: "+58" },
-              ]}
-              selectValue={phoneCode}
-              onSelectChange={setPhoneCode}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              rightIcon={<Feather name="check" size={18} color="#D3D3D3" />}
-            />
-
-            <Input
-              label="Teléfono secundario"
-              hasSelect
-              selectOptions={[
-                { label: "+57", value: "+57" },
-                { label: "+1", value: "+1" },
-                { label: "+58", value: "+58" },
-              ]}
-              selectValue={phoneCode2}
-              onSelectChange={setPhoneCode2}
-              value={phone2}
-              onChangeText={setPhone2}
-              keyboardType="phone-pad"
-              rightIcon={<Feather name="check" size={18} color="#D3D3D3" />}
-            />
-
-            <Input
-              label="Correo eléctronico"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="anapuki@gmail.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              rightIcon={<Feather name="check" size={18} color="#D3D3D3" />}
-            />
-
-            <Input
-              label="Dirección"
-              value={address}
-              onChangeText={setAddress}
-            />
-
-            <Input
-              label="Referencia"
-              value={reference}
-              onChangeText={setReference}
-            />
-
-            <View style={create_lead_styles.mapContainer}>
-              <MapView
-                style={{ width: "100%", height: "100%" }}
-                initialRegion={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                userInterfaceStyle="light"
-                onPress={(e) => setLocation(e.nativeEvent.coordinate)}
-                customMapStyle={mapStyle}
-              >
-                <Marker
-                  coordinate={location}
-                  anchor={{ x: 0.5, y: 1 }}
-                  image={require("@/assets/images/marker.png")}
-                  style={{
-                    width: 400,
-                    height: 400,
-                  }}
-                ></Marker>
-              </MapView>
-            </View>
+            {config.steps.map((step, stepIndex) => (
+              <View key={step.id}>
+                {config.steps.length > 1 && (
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    color: '#0C352E',
+                    marginBottom: 16,
+                    marginTop: stepIndex > 0 ? 24 : 0,
+                  }}>
+                    {step.name}
+                  </Text>
+                )}
+                
+                {step.fields
+                  .filter(field => {
+                    // Filtrar sales_rep_id porque se asigna automáticamente
+                    if (field.is_system_field && field.system_field_mapping === 'sales_rep_id') {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .sort((a, b) => a.order - b.order)
+                  .map(field => {
+                    const fieldKey = field.is_system_field && field.system_field_mapping 
+                      ? field.system_field_mapping 
+                      : field.name;
+                    
+                    return (
+                      <DynamicField
+                        key={field.id}
+                        field={field}
+                        value={formData[fieldKey]}
+                        onChange={(value) => handleFieldChange(fieldKey, value)}
+                        error={errors[fieldKey]}
+                      />
+                    );
+                  })}
+              </View>
+            ))}
           </View>
         </ScrollView>
 
-        <TouchableOpacity style={create_lead_styles.nextButton}>
-          <Text style={create_lead_styles.nextButtonText}>Siguiente</Text>
+        <TouchableOpacity 
+          style={[
+            create_lead_styles.nextButton,
+            createLoading && { opacity: 0.6 }
+          ]}
+          onPress={handleSubmit}
+          disabled={createLoading}
+        >
+          {createLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={create_lead_styles.nextButtonText}>Crear Lead</Text>
+          )}
         </TouchableOpacity>
       </View>
     </>

@@ -4,12 +4,16 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@presentation/hooks/use-color-scheme";
 import { UIKittenProvider } from "@presentation/providers/UIKittenProvider";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: "auth",
@@ -17,6 +21,10 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

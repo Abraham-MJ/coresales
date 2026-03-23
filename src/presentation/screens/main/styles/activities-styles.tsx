@@ -216,4 +216,24 @@ export const activities_styles = StyleSheet.create({
         color: '#61646B',
         textAlign: 'center',
     },
+    priorityBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginLeft: 8,
+    },
+    priorityHigh: {
+        backgroundColor: '#FEE2E2',
+    },
+    priorityMedium: {
+        backgroundColor: '#FEF3C7',
+    },
+    priorityLow: {
+        backgroundColor: '#DBEAFE',
+    },
+    priorityText: {
+        fontSize: 11,
+        fontWeight: '600' as '600',
+        color: '#232323',
+    },
 });

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
-import Modal from 'react-native-modal';
 import Feather from '@expo/vector-icons/Feather';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Modal from 'react-native-modal';
 
 interface CreateActivityModalProps {
   visible: boolean;
@@ -12,16 +13,39 @@ interface CreateActivityModalProps {
 export function CreateActivityModal({ visible, onClose, onSave }: CreateActivityModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [type, setType] = useState<'call' | 'meeting' | 'follow_up'>('call');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSave = () => {
-    onSave({ title, description, date, time });
+    if (!title.trim()) {
+      return;
+    }
+    
+    const dataToSend = { 
+      title, 
+      description, 
+      date: date.toISOString(), 
+      type,
+      priority,
+    };
+    
+    
+    onSave(dataToSend);
     setTitle('');
     setDescription('');
-    setDate('');
-    setTime('');
+    setDate(new Date());
+    setType('call');
+    setPriority('medium');
     onClose();
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
 
   return (
@@ -44,35 +68,31 @@ export function CreateActivityModal({ visible, onClose, onSave }: CreateActivity
         </View>
 
         <View style={styles.form}>
-          <View style={styles.row}>
-            <View style={styles.halfField}>
-              <Text style={styles.label}>Fecha</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.inputText}
-                  placeholder="DD/MM/AAAA"
-                  value={date}
-                  onChangeText={setDate}
-                  placeholderTextColor="#D0D0D0"
-                />
-                <Feather name="calendar" size={18} color="#D0D0D0" />
-              </View>
-            </View>
-
-            <View style={styles.halfField}>
-              <Text style={styles.label}>Hora</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.inputText}
-                  placeholder="00:00"
-                  value={time}
-                  onChangeText={setTime}
-                  placeholderTextColor="#D0D0D0"
-                />
-                <Feather name="clock" size={18} color="#D0D0D0" />
-              </View>
-            </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Fecha</Text>
+            <TouchableOpacity 
+              style={styles.inputContainer}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.inputText}>
+                {date.toLocaleDateString('es-ES', { 
+                  day: '2-digit', 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </Text>
+              <Feather name="calendar" size={18} color="#D0D0D0" />
+            </TouchableOpacity>
           </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
 
           <View style={styles.field}>
             <Text style={styles.label}>Título</Text>
@@ -81,8 +101,72 @@ export function CreateActivityModal({ visible, onClose, onSave }: CreateActivity
                 style={styles.inputText}
                 value={title}
                 onChangeText={setTitle}
+                placeholder="Ej: Llamar a cliente"
                 placeholderTextColor="#D0D0D0"
               />
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Tipo</Text>
+            <View style={styles.typeContainer}>
+              <TouchableOpacity
+                style={[styles.typeOption, type === 'call' && styles.typeOptionActive]}
+                onPress={() => setType('call')}
+              >
+                <Feather name="phone" size={18} color={type === 'call' ? '#FFFFFF' : '#61646B'} />
+                <Text style={[styles.typeOptionText, type === 'call' && styles.typeOptionTextActive]}>
+                  Llamada
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.typeOption, type === 'meeting' && styles.typeOptionActive]}
+                onPress={() => setType('meeting')}
+              >
+                <Feather name="users" size={18} color={type === 'meeting' ? '#FFFFFF' : '#61646B'} />
+                <Text style={[styles.typeOptionText, type === 'meeting' && styles.typeOptionTextActive]}>
+                  Reunión
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.typeOption, type === 'follow_up' && styles.typeOptionActive]}
+                onPress={() => setType('follow_up')}
+              >
+                <Feather name="check-circle" size={18} color={type === 'follow_up' ? '#FFFFFF' : '#61646B'} />
+                <Text style={[styles.typeOptionText, type === 'follow_up' && styles.typeOptionTextActive]}>
+                  Seguimiento
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Prioridad</Text>
+            <View style={styles.priorityContainer}>
+              <TouchableOpacity
+                style={[styles.priorityOption, priority === 'low' && styles.priorityLowActive]}
+                onPress={() => setPriority('low')}
+              >
+                <Text style={[styles.priorityOptionText, priority === 'low' && styles.priorityOptionTextActive]}>
+                  Baja
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.priorityOption, priority === 'medium' && styles.priorityMediumActive]}
+                onPress={() => setPriority('medium')}
+              >
+                <Text style={[styles.priorityOptionText, priority === 'medium' && styles.priorityOptionTextActive]}>
+                  Media
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.priorityOption, priority === 'high' && styles.priorityHighActive]}
+                onPress={() => setPriority('high')}
+              >
+                <Text style={[styles.priorityOptionText, priority === 'high' && styles.priorityOptionTextActive]}>
+                  Alta
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -93,6 +177,7 @@ export function CreateActivityModal({ visible, onClose, onSave }: CreateActivity
                 style={[styles.inputText, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
+                placeholder="Detalles adicionales..."
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -101,7 +186,11 @@ export function CreateActivityModal({ visible, onClose, onSave }: CreateActivity
             </View>
           </View>
 
-          <TouchableOpacity style={styles.createButton} onPress={handleSave}>
+          <TouchableOpacity 
+            style={[styles.createButton, !title.trim() && styles.createButtonDisabled]} 
+            onPress={handleSave}
+            disabled={!title.trim()}
+          >
             <Text style={styles.createButtonText}>Crear</Text>
           </TouchableOpacity>
         </View>
@@ -190,9 +279,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  createButtonDisabled: {
+    backgroundColor: '#D3D3D3',
+  },
   createButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600' as '600',
+  },
+  typeContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  typeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  typeOptionActive: {
+    backgroundColor: '#0C352E',
+    borderColor: '#0C352E',
+  },
+  typeOptionText: {
+    fontSize: 13,
+    color: '#61646B',
+    fontWeight: '500' as '500',
+  },
+  typeOptionTextActive: {
+    color: '#FFFFFF',
+  },
+  priorityContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  priorityOption: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  priorityLowActive: {
+    backgroundColor: '#DBEAFE',
+    borderColor: '#3B82F6',
+  },
+  priorityMediumActive: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  priorityHighActive: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  priorityOptionText: {
+    fontSize: 13,
+    color: '#61646B',
+    fontWeight: '500' as '500',
+  },
+  priorityOptionTextActive: {
+    color: '#232323',
     fontWeight: '600' as '600',
   },
 });

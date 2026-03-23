@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Dimensions, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface SelectOption {
   label: string;
@@ -78,7 +78,10 @@ export function Select({
       <View>
         <TouchableOpacity 
           style={styles.selectButton}
-          onPress={() => setDropdownVisible(!dropdownVisible)}
+          onPress={() => {
+            console.log('Select clicked, current visible:', dropdownVisible);
+            setDropdownVisible(!dropdownVisible);
+          }}
         >
           <Text style={[styles.selectText, !selectedOption && styles.placeholderText]} numberOfLines={1}>
             {selectedOption?.label || placeholder || 'Seleccionar'}
@@ -92,51 +95,45 @@ export function Select({
         </TouchableOpacity>
 
         {dropdownVisible && (
-          <>
-            <TouchableOpacity 
-              style={styles.dropdownOverlay}
-              activeOpacity={1}
-              onPress={() => setDropdownVisible(false)}
-            />
-            <Animated.View 
-              style={[
-                styles.dropdownContainer,
-                {
-                  maxHeight: animatedHeight.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 200],
-                  }),
-                  opacity: animatedOpacity,
-                }
-              ]}
+          <Animated.View 
+            style={[
+              styles.dropdownContainer,
+              {
+                maxHeight: animatedHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 200],
+                }),
+                opacity: animatedOpacity,
+              }
+            ]}
+          >
+            <ScrollView 
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
             >
-              <ScrollView 
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}
-              >
-                {options.map((item) => (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={[
-                      styles.dropdownItem,
-                      item.value === value && styles.dropdownItemSelected
-                    ]}
-                    onPress={() => {
-                      onChange?.(item.value);
-                      setDropdownVisible(false);
-                    }}
-                  >
-                    <Text style={[
-                      styles.dropdownItemText,
-                      item.value === value && styles.dropdownItemTextSelected
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </Animated.View>
-          </>
+              {options.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
+                  style={[
+                    styles.dropdownItem,
+                    item.value === value && styles.dropdownItemSelected
+                  ]}
+                  onPress={() => {
+                    console.log('Option selected:', item.value);
+                    onChange?.(item.value);
+                    setDropdownVisible(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    item.value === value && styles.dropdownItemTextSelected
+                  ]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animated.View>
         )}
       </View>
       
@@ -165,24 +162,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#D3D3D3',
-    borderRadius: 8,
+    borderColor: '#E5E5E5',
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    height: 48,
-    paddingHorizontal: width * 0.04,
+    height: 56,
+    paddingHorizontal: 16,
     paddingRight: 40,
     position: 'relative',
   },
   selectText: {
-    fontSize: width * 0.04,
+    fontSize: 16,
     color: '#232323',
-    fontWeight: '500',
+    fontWeight: '400',
     flex: 1,
   },
   arrowContainer: {
     position: 'absolute',
-    right: 12,
-    top: 12,
+    right: 16,
+    top: 16,
   },
   placeholderText: {
     color: '#D3D3D3',
@@ -211,21 +208,18 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   dropdownContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 12,
     maxHeight: 200,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
-    zIndex: 1000,
     borderWidth: 1,
-    borderColor: '#D3D3D3',
+    borderColor: '#E5E5E5',
+    marginTop: 4,
+    overflow: 'hidden',
   },
   dropdownItem: {
     paddingVertical: 16,

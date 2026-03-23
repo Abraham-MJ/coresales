@@ -1,13 +1,40 @@
 import Feather from "@expo/vector-icons/Feather";
+import { useProfile } from "@presentation/hooks/useProfile";
+import { API_CONFIG } from "@shared/constants/api.constants";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { styles } from "./profile-styles";
 
 export const ProfileScreen = () => {
   const router = useRouter();
+  const { data, loading, logout } = useProfile();
+  
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/auth/login");
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!data?.salesRep) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>No se pudo cargar el perfil</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const { salesRep, user } = data;
+  const avatarUrl = user?.avatar ? `${API_CONFIG.DOMAIN_URL}${user.avatar}` : null;
 
   return (
     <>
@@ -15,30 +42,51 @@ export const ProfileScreen = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.avatarContainer}>
-              <Image
-                source={require("@/assets/images/user-image.jpg")}
-                style={{
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: 100,
+                    backgroundColor: "#D7D9CF",
+                  }}
+                />
+              ) : (
+                <View style={{
                   width: 120,
                   height: 120,
                   borderRadius: 100,
                   backgroundColor: "#D7D9CF",
-                }}
-              />
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <Text style={{ fontSize: 40, color: '#fff' }}>
+                    {salesRep.first_names.charAt(0)}{salesRep.last_names.charAt(0)}
+                  </Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.userName}>Abraham Moreno</Text>
-            <Text style={styles.userEmail}>morenoabraham.j@coresales.com</Text>
+            <Text style={styles.userName}>
+              {salesRep.first_names} {salesRep.last_names}
+            </Text>
+            <Text style={styles.userEmail}>{salesRep.email}</Text>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Información Personal</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Cédula</Text>
-              <Text style={styles.infoValue}>V-31228673</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Teléfono</Text>
-              <Text style={styles.infoValue}>(412) 0263093</Text>
-            </View>
+            {salesRep.document_number && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Cédula</Text>
+                <Text style={styles.infoValue}>{salesRep.document_number}</Text>
+              </View>
+            )}
+            {salesRep.phone && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Teléfono</Text>
+                <Text style={styles.infoValue}>{salesRep.phone}</Text>
+              </View>
+            )}
             <View style={[styles.infoRow, styles.infoRowLast]}>
               <Text style={styles.infoLabel}>Cargo</Text>
               <Text style={styles.infoValue}>Vendedor</Text>
@@ -87,7 +135,7 @@ export const ProfileScreen = () => {
 
           <TouchableOpacity
             style={styles.logoutButton}
-            onPress={() => router.push("/auth/login")}
+            onPress={handleLogout}
           >
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
           </TouchableOpacity>

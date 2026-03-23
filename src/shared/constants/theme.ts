@@ -15,6 +15,7 @@ export const Colors = {
     textSecondary: "#6C757D",
     border: "#DEE2E6",
     tint: "#007AFF",
+    icon: "#687076",
   },
   dark: {
     primary: "#007AFF",
@@ -27,6 +28,7 @@ export const Colors = {
     textSecondary: "#AAAAAA",
     border: "#404040",
     tint: "#66BDF9",
+    icon: "#9BA1A6",
   },
 };
 

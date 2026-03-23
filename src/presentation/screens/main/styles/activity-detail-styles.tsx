@@ -13,15 +13,23 @@ export const activity_detail_styles = StyleSheet.create({
         paddingVertical: 16,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
     },
     backButton: {
         padding: 4,
-        marginRight: 16,
+        width: 40,
+    },
+    editButton: {
+        padding: 4,
+        width: 40,
+        alignItems: 'flex-end',
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600' as '600',
         color: '#FFFFFF',
+        flex: 1,
+        textAlign: 'center' as 'center',
     },
     content: {
         flex: 1,
@@ -122,5 +130,57 @@ export const activity_detail_styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600' as '600',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '600' as '600',
+        color: '#232323',
+        marginHorizontal: 20,
+        marginTop: 8,
+        marginBottom: 12,
+    },
+    inputField: {
+        borderWidth: 1,
+        borderColor: '#D3D3D3',
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 8,
+        backgroundColor: '#FFFFFF',
+    },
+    textArea: {
+        minHeight: 100,
+        textAlignVertical: 'top' as 'top',
+    },
+    priorityBadge: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+        marginTop: 8,
+    },
+    priorityHigh: {
+        backgroundColor: '#FEE2E2',
+    },
+    priorityMedium: {
+        backgroundColor: '#FEF3C7',
+    },
+    priorityLow: {
+        backgroundColor: '#DBEAFE',
+    },
+    priorityText: {
+        fontSize: 13,
+        fontWeight: '600' as '600',
+        color: '#232323',
+    },
+    statusInlineSection: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+        flexWrap: 'wrap' as 'wrap',
+    },
+    statusInlineOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
 });
